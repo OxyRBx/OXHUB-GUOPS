@@ -1,0 +1,259 @@
+-- full delta-style gui with gradient only on main background
+-- remove old gui if exists
+pcall(function()
+	if game.CoreGui:FindFirstChild("DeltaStyleGui") then
+		game.CoreGui.DeltaStyleGui:Destroy()
+	end
+end)
+
+local screenGui = Instance.new("ScreenGui", game.CoreGui)
+screenGui.Name = "DeltaStyleGui"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local panel = Instance.new("Frame")
+panel.Name = "SidePanel"
+panel.Size = UDim2.new(0, 100, 0, 150)
+panel.Position = UDim2.new(0, 20, 0.5, -75)
+panel.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+panel.BorderSizePixel = 0
+panel.Active = true
+panel.Draggable = true
+panel.Parent = screenGui
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
+
+local gradient = Instance.new("UIGradient")
+gradient.Parent = panel
+gradient.Rotation = 90
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 140, 140)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
+}
+
+local label = Instance.new("TextLabel")
+label.Parent = panel
+label.Size = UDim2.new(0, 90, 0, 30)
+label.Position = UDim2.new(0, 9, 0, 5)
+label.Text = "OXHUB"
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextSize = 14
+label.BackgroundTransparency = 1
+label.Font = Enum.Font.GothamBold
+label.TextXAlignment = Enum.TextXAlignment.Left
+
+local xBtn = Instance.new("TextButton")
+xBtn.Size = UDim2.new(0, 20, 0, 30)
+xBtn.Position = UDim2.new(1, -25, 0, 5)
+xBtn.Text = "X"
+xBtn.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+xBtn.BackgroundTransparency = 1
+xBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+xBtn.Font = Enum.Font.GothamBold
+xBtn.TextSize = 14
+xBtn.BorderSizePixel = 0
+xBtn.Parent = panel
+Instance.new("UICorner", xBtn).CornerRadius = UDim.new(0, 6)
+
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0, 20, 0, 30)
+minBtn.Position = UDim2.new(1, -40, 0, 5)
+minBtn.Text = "-"
+minBtn.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+minBtn.BackgroundTransparency = 1
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 16
+minBtn.BorderSizePixel = 0
+minBtn.Parent = panel
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
+
+local miniCircle = Instance.new("TextButton")
+miniCircle.Name = "MiniCircle"
+miniCircle.Size = UDim2.new(0, 40, 0, 40)
+miniCircle.Position = UDim2.new(0.5, 0, 0, 10)
+miniCircle.AnchorPoint = Vector2.new(0.5, 0)
+miniCircle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+miniCircle.BackgroundTransparency = 0.5
+miniCircle.Text = "O"
+miniCircle.TextColor3 = Color3.fromRGB(255, 255, 255)
+miniCircle.TextSize = 20
+miniCircle.Font = Enum.Font.GothamBold
+miniCircle.Visible = false
+miniCircle.Active = true
+miniCircle.Draggable = true
+miniCircle.Parent = screenGui
+Instance.new("UICorner", miniCircle).CornerRadius = UDim.new(1, 0)
+
+xBtn.MouseButton1Click:Connect(function()
+	panel.Visible = false
+end)
+
+minBtn.MouseButton1Click:Connect(function()
+	panel.Visible = false
+	miniCircle.Visible = true
+end)
+
+miniCircle.MouseButton1Click:Connect(function()
+	panel.Visible = true
+	miniCircle.Visible = false
+end)
+
+local buttonColors = {
+	Color3.fromRGB(35, 35, 35),
+	Color3.fromRGB(30, 30, 30),
+	Color3.fromRGB(25, 25, 25),
+}
+
+local buttonTexts = {
+	"Slap Toggle",
+	"Kick Toggle",
+	"Stomp Toggle",
+}
+
+for i = 1, 3 do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.8, 0, 0, 25)
+	btn.Position = UDim2.new(0.1, 0, 0, 40 + (i - 1) * 30)
+	btn.BackgroundColor3 = buttonColors[i]
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Text = buttonTexts[i]
+	btn.Font = Enum.Font.GothamSemibold
+	btn.TextSize = 10
+	btn.Parent = panel
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+	-- connect button scripts
+	if i == 1 then
+		btn.MouseButton1Click:Connect(function()
+			if _G.slapAura then
+				_G.slapAura = false
+				game.StarterGui:SetCore("SendNotification", {
+					Title = "Slap Aura",
+					Text = "🔴 Disabled",
+					Duration = 3
+				})
+				return
+			end
+			_G.slapAura = true
+			game.StarterGui:SetCore("SendNotification", {
+				Title = "Slap Aura",
+				Text = "🟢 Enabled",
+				Duration = 3
+			})
+			local plr = game.Players.LocalPlayer
+			local chr = plr.Character or plr.CharacterAdded:Wait()
+			local hrp = chr:WaitForChild("HumanoidRootPart")
+			local fightEvent = chr:WaitForChild("Fight"):WaitForChild("FightScript"):WaitForChild("FightEvent")
+			local args = {"Slap"}
+			local range = 25
+			local hitPartName = "Head"
+			task.spawn(function()
+				while _G.slapAura do
+					task.wait(0.05)
+					fightEvent:FireServer(unpack(args))
+					for _, enemy in pairs(game.Players:GetPlayers()) do
+						if enemy ~= plr and enemy.Character and enemy.Character:FindFirstChild(hitPartName) then
+							local part = enemy.Character[hitPartName]
+							if (part.Position - hrp.Position).Magnitude <= range then
+								for _, myPart in pairs(chr:GetChildren()) do
+									if myPart:IsA("BasePart") then
+										firetouchinterest(myPart, part, 0)
+										firetouchinterest(myPart, part, 1)
+									end
+								end
+							end
+						end
+					end
+				end
+			end)
+		end)
+	elseif i == 2 then
+		btn.MouseButton1Click:Connect(function()
+			if _G.kickAura then
+				_G.kickAura = false
+				game.StarterGui:SetCore("SendNotification", {
+					Title = "Kick Aura",
+					Text = "🔴 Disabled",
+					Duration = 3
+				})
+				return
+			end
+			_G.kickAura = true
+			game.StarterGui:SetCore("SendNotification", {
+				Title = "Kick Aura",
+				Text = "🟢 Enabled",
+				Duration = 3
+			})
+			local plr = game.Players.LocalPlayer
+			local chr = plr.Character or plr.CharacterAdded:Wait()
+			local hrp = chr:WaitForChild("HumanoidRootPart")
+			local fightEvent = chr:WaitForChild("Fight"):WaitForChild("FightScript"):WaitForChild("FightEvent")
+			local args = {"Kick"}
+			local range = 25
+			local hitPartName = "Head"
+			task.spawn(function()
+				while _G.kickAura do
+					task.wait(0.05)
+					fightEvent:FireServer(unpack(args))
+					for _, enemy in pairs(game.Players:GetPlayers()) do
+						if enemy ~= plr and enemy.Character and enemy.Character:FindFirstChild(hitPartName) then
+							local part = enemy.Character[hitPartName]
+							if (part.Position - hrp.Position).Magnitude <= range then
+								for _, myPart in pairs(chr:GetChildren()) do
+									if myPart:IsA("BasePart") then
+										firetouchinterest(myPart, part, 0)
+										firetouchinterest(myPart, part, 1)
+									end
+								end
+							end
+						end
+					end
+				end
+			end)
+		end)
+	elseif i == 3 then
+		btn.MouseButton1Click:Connect(function()
+			if _G.stompAura then
+				_G.stompAura = false
+				game.StarterGui:SetCore("SendNotification", {
+					Title = "Stomp Aura",
+					Text = "🔴 Disabled",
+					Duration = 3
+				})
+				return
+			end
+			_G.stompAura = true
+			game.StarterGui:SetCore("SendNotification", {
+				Title = "Stomp Aura",
+				Text = "🟢 Enabled",
+				Duration = 3
+			})
+			local plr = game.Players.LocalPlayer
+			local chr = plr.Character or plr.CharacterAdded:Wait()
+			local hrp = chr:WaitForChild("HumanoidRootPart")
+			local fightEvent = chr:WaitForChild("Fight"):WaitForChild("FightScript"):WaitForChild("FightEvent")
+			local args = {"Stomp"}
+			local range = 25
+			local hitPartName = "Head"
+			task.spawn(function()
+				while _G.stompAura do
+					task.wait(0.05)
+					fightEvent:FireServer(unpack(args))
+					for _, enemy in pairs(game.Players:GetPlayers()) do
+						if enemy ~= plr and enemy.Character and enemy.Character:FindFirstChild(hitPartName) then
+							local part = enemy.Character[hitPartName]
+							if (part.Position - hrp.Position).Magnitude <= range then
+								for _, myPart in pairs(chr:GetChildren()) do
+									if myPart:IsA("BasePart") then
+										firetouchinterest(myPart, part, 0)
+										firetouchinterest(myPart, part, 1)
+									end
+								end
+							end
+						end
+					end
+				end
+			end)
+		end)
+	end
+end
