@@ -1,5 +1,10 @@
--- AUTO-RELOADING GHOST_TOWN FINDER + SERVER HOP
--- Made for OxyRbx (OXHUB)
+-- OXHUB Ghost_Town Finder + Auto Server Hop + Auto Reload
+
+if queue_on_teleport then
+    queue_on_teleport(
+        'loadstring(game:HttpGet("https://raw.githubusercontent.com/OxyRBx/OXHUB-GUOPS/refs/heads/main/Script"))()'
+    )
+end
 
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
@@ -9,10 +14,7 @@ local lp = Players.LocalPlayer
 local TARGET_NAME = "Ghost_Town"
 local PLACE_ID = game.PlaceId
 
--------------------------------------------------------
--- RECURSIVE SEARCH
--------------------------------------------------------
-
+-- Recursive search
 local function findFolderRecursive(parent)
     for _, child in ipairs(parent:GetChildren()) do
         if child.Name == TARGET_NAME then
@@ -24,21 +26,11 @@ local function findFolderRecursive(parent)
     return nil
 end
 
-local function searchForGhostTown()
-    return findFolderRecursive(game.Workspace)
-end
-
--------------------------------------------------------
--- SERVER HOP FUNCTION
--------------------------------------------------------
-
+-- Server hop
 local function serverHop()
-    print("[OXHUB] Ghost_Town not found → Server hopping...")
+    print("[OXHUB] Ghost_Town not found → hopping...")
 
-    local response = game:HttpGet(
-        "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/Public?sortOrder=Asc&limit=100"
-    )
-
+    local response = game:HttpGet("https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/Public?sortOrder=Asc&limit=100")
     local data = HttpService:JSONDecode(response)
 
     for _, server in ipairs(data.data) do
@@ -48,28 +40,15 @@ local function serverHop()
         end
     end
 
-    -- Fallback to random server
+    -- fallback
     TeleportService:Teleport(PLACE_ID, lp)
 end
 
--------------------------------------------------------
--- AUTO-RELOAD (THIS MAKES IT LIKE INFINITE YIELD)
--------------------------------------------------------
-
-lp.OnTeleport:Connect(function()
-    -- IMPORTANT: This must point to YOUR RAW GITHUB FILE
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/OxyRBx/OXHUB-GUOPS/refs/heads/main/Script"))()
-end)
-
--------------------------------------------------------
--- MAIN LOOP
--------------------------------------------------------
-
+-- Main loop
 while task.wait(2) do
-    local found = searchForGhostTown()
-
+    local found = findFolderRecursive(workspace)
     if found then
-        print("[OXHUB] FOUND → " .. found:GetFullName())
+        print("[OXHUB] FOUND at:", found:GetFullName())
         break
     else
         serverHop()
