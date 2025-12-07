@@ -1,39 +1,71 @@
--- full delta-style gui with gradient only on main background
--- remove old gui if exists
-pcall(function()
-	if game.CoreGui:FindFirstChild("DeltaStyleGui") then
-		game.CoreGui.DeltaStyleGui:Destroy()
-	end
+-- AUTO-RELOADING GHOST_TOWN FINDER + SERVER HOP
+-- Works like Infinite Yield (script runs again after hop)
+
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+local TARGET_NAME = "Ghost_Town"
+local PLACE_ID = game.PlaceId
+
+-- Recursive search
+local function findFolderRecursive(parent)
+    for _, child in ipairs(parent:GetChildren()) do
+        if child.Name == TARGET_NAME then
+            return child
+        end
+        local found = findFolderRecursive(child)
+        if found then return found end
+    end
+    return nil
+end
+
+local function searchForGhostTown()
+    return findFolderRecursive(game.Workspace)
+end
+
+-- Server hop
+local function serverHop()
+    print("Ghost_Town not found → Hopping server...")
+
+    local data = HttpService:JSONDecode(
+        game:HttpGet("https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/Public?sortOrder=Asc&limit=100")
+    )
+
+    for _, server in ipairs(data.data) do
+        if server.playing < server.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(PLACE_ID, server.id, lp)
+            return
+        end
+    end
+
+    -- fallback random
+    TeleportService:Teleport(PLACE_ID, lp)
+end
+
+-- Re-run script after teleport (important!)
+lp.OnTeleport:Connect(function(State)
+    if State == Enum.PlayerActions.CharacterSpawned then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/yourrawscripturl/script.lua"))()
+    end
 end)
 
-local screenGui = Instance.new("ScreenGui", game.CoreGui)
-screenGui.Name = "DeltaStyleGui"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-------------------------------------------------------
+-- MAIN LOOP (auto reload like IY)
+-------------------------------------------------------
 
-local panel = Instance.new("Frame")
-panel.Name = "SidePanel"
-panel.Size = UDim2.new(0, 100, 0, 150)
-panel.Position = UDim2.new(0, 20, 0.5, -75)
-panel.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-panel.BorderSizePixel = 0
-panel.Active = true
-panel.Draggable = true
-panel.Parent = screenGui
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
+while task.wait(3) do
+    local found = searchForGhostTown()
 
-local gradient = Instance.new("UIGradient")
-gradient.Parent = panel
-gradient.Rotation = 90
-gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 140, 140)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
-}
-
-local label = Instance.new("TextLabel")
-label.Parent = panel
-label.Size = UDim2.new(0, 90, 0, 30)
-label.Position = UDim2.new(0, 9, 0, 5)
+    if found then
+        print("FOUND →", found:GetFullName())
+        break
+    else
+        serverHop()
+        break -- break loop and teleport
+    end
+end
 label.Text = "OXHUB"
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
 label.TextSize = 14
